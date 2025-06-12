@@ -1,0 +1,42 @@
+[package]
+name = "nano-service"
+author = "Norris"
+version = "0.1.0"
+edition = "2024"
+
+
+[dependencies]
+# Data and Types
+serde = "1.0"
+serde_json = "1.0"
+thiserror = "1.0.31"
+derive_more = "0.99.17"
+validator = { version = "0.15.0", features = ["derive"] }
+
+# Database
+sqlx = { version = "0.7.3", features = [ "runtime-tokio-rustls", "sqlite" ] }
+
+# Runtimes
+tokio = { version = "1.37", features = ["full"] }
+async-trait = "0.1.68"
+anyhow = "1.0.70"
+futures = "0.3.30"
+
+# Interfaces
+axum = "0.7.4"
+axum-macros = "0.4.1"
+utoipa = { version = "4.2.0" }
+utoipa-swagger-ui = { version = "6.0.0", features = ["axum"] }
+
+# Environment, Setup, and Initialization
+clap =   {version = "4.4.6" }
+dotenv = { version = "0.15" }
+
+# Observability
+tracing =            { version = "0.1" }
+tracing-subscriber = { version = "0.3" }
+
+
+[profile.profiling]
+inherits = "release"
+debug = true
