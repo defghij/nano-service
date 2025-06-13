@@ -1,32 +1,34 @@
 use tracing::Level;
+use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+
+use std::sync::Arc;
 
 mod domain;
 mod persistence;
 mod observability;
+mod interfaces;
 
-use domain::dinosaur::Dinosaur;
-use persistence::db;
+//use domain::dinosaur::Dinosaur;
 use observability::setup_tracing;
 
+type AppState = Arc<SqlitePool>;
 
 #[tokio::main]
 async fn main() {
-    setup_tracing(Level::INFO);
+    setup_tracing(Level::DEBUG);
 
-    // Set up database connection
-    let pool = db::connect().await;
-    db::create_table(&pool).await;
+    //let pool = persistence::db::connect().await;
+    //persistence::db::create_table(&pool).await;
 
-    // Add elements to the database
-    db::insert("Stegasaurus", &pool).await;
-    db::insert("Trex", &pool).await;
-    db::insert("Raptor", &pool).await;
-    db::insert("Pidgeon", &pool).await;
 
-    // Query database
-    db::query_dinos(&pool).await
-        .iter()
-        .for_each(|dino: &Dinosaur| {
-            println!("[{}] species: {}", dino.id, dino.species);
-        });
+    let db = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect("sqlite://sqlite.db")
+        .await
+        .expect("Failed to connect to DB");
+
+    let app = interfaces::api::app(Arc::new(db));
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 }
