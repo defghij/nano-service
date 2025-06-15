@@ -1,5 +1,6 @@
+use persistence::DB_URL;
 use tracing::Level;
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite, SqlitePool};
 
 use std::sync::Arc;
 
@@ -17,18 +18,22 @@ type AppState = Arc<SqlitePool>;
 async fn main() {
     setup_tracing(Level::DEBUG);
 
-    //let pool = persistence::db::connect().await;
-    //persistence::db::create_table(&pool).await;
+    let pool = persistence::db::connect().await;
+    persistence::db::create_table(&pool).await;
 
+    //let db = SqlitePoolOptions::new()
+        //.max_connections(5)
+        //.connect(persistence::DB_URL)
+        //.await
+        //.expect("Failed to connect to DB");
+    //tracing::info!("Connected to {}", persistence::DB_URL);
+    
 
-    let db = SqlitePoolOptions::new()
-        .max_connections(5)
-        .connect("sqlite://sqlite.db")
-        .await
-        .expect("Failed to connect to DB");
+    let app = interfaces::api::app(Arc::new(pool));
 
-    let app = interfaces::api::app(Arc::new(db));
+    let listener = tokio::net::TcpListener::bind(interfaces::URL).await.unwrap();
+    tracing::info!("Bound lister to {}", interfaces::URL);
+    tracing::info!("View API at {}/api", interfaces::URL);
 
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

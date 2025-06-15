@@ -4,6 +4,8 @@ use utoipa::OpenApi;
 //use utoipa_swagger_ui::SwaggerUi;
 use crate::domain::dinosaur::{CreateDinosaur, Dinosaur, Taxonomy};
 
+pub const URL: &str = "0.0.0.0:3000";
+
 #[derive(OpenApi)]
 #[openapi(
     paths(
