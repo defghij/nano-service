@@ -34,7 +34,7 @@ pub async fn connect() -> Pool<Sqlite> {
 /// exists, and recreates it.
 pub async fn create_table(pool: &Pool<Sqlite>) {
     let query_result = sqlx::query("
-        DROP TABLE dinosaurs;      -- Remove old one first
+        -- DROP TABLE dinosaurs;      -- Remove old one first
         CREATE TABLE IF NOT EXISTS dinosaurs (
             id TEXT PRIMARY KEY NOT NULL, 
             species VARCHAR(250) NOT NULL, 

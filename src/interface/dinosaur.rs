@@ -21,11 +21,11 @@ pub mod crud {
         path = "/dinosaurs",
         request_body = CreateDinosaur,
         responses(
-            (status = 201, description = "Dinosaur created", body = Uuid)
+            (status = StatusCode::CREATED, description = "Dinosaur created", body = Uuid)
         )
     )]
     #[axum_macros::debug_handler]
-    pub async fn create(State(pool): State<AppState>, Json(payload): Json<CreateDinosaur>) -> Json<Uuid> {
+    pub async fn create(State(pool): State<AppState>, Json(payload): Json<CreateDinosaur>) -> impl IntoResponse {
         tracing::debug!("Request to create dinosaur ({:?}, {:?})", &payload.species, &payload.taxonomy);
         let id = Uuid::new_v4();
         let dino = Dinosaur { id, species: payload.species, taxonomy: payload.taxonomy };
@@ -35,15 +35,15 @@ pub mod crud {
             .bind(&dino.taxonomy)
             .execute(&*pool)
             .await
-            .expect("Data structure should be well formed");
+            .expect("Data structure should be well formed"); // TODO: Handle this
 
         let dinos = sqlx::query_as::<_, Dinosaur>("SELECT * FROM dinosaurs")
             .fetch_all(&*pool)
             .await
-            .expect("Database pool should exist for querying");
+            .expect("Database pool should exist for querying"); // TODO: Handle this
         tracing::debug!("list of dinosaurs after insert: {:?}", dinos);
 
-        Json(dino.id)
+        (StatusCode::CREATED, Json(dino.id))
     }
 
     #[openapi_path(
@@ -53,8 +53,8 @@ pub mod crud {
             ("id" = Uuid, Path, description = "Dinosaur UUID")
         ),
         responses(
-            (status = 200, body = Dinosaur),
-            (status = 404, description = "Dinosaur not found")
+            (status = StatusCode::OK, body = Dinosaur),
+            (status = StatusCode::NOT_FOUND, description = "Dinosaur not found")
         )
     )]
     #[axum_macros::debug_handler]
@@ -79,11 +79,11 @@ pub mod crud {
         ),
         request_body = CreateDinosaur,
         responses(
-            (status = 200, description = "Dinosaur updated")
+            (status = StatusCode::OK, description = "Dinosaur updated")
         )
     )]
     #[axum_macros::debug_handler]
-    pub async fn update(Path(id): Path<Uuid>, State(pool): State<AppState>, Json(payload): Json<CreateDinosaur>) {
+    pub async fn update(Path(id): Path<Uuid>, State(pool): State<AppState>, Json(payload): Json<CreateDinosaur>) -> impl IntoResponse {
         tracing::debug!("Request: update dinosaur {} to ({:?}, {:?})", id, &payload.species, &payload.taxonomy);
         sqlx::query("UPDATE dinosaurs SET species = ?, taxonomy = ? WHERE id = ?")
             .bind(id)
@@ -91,7 +91,8 @@ pub mod crud {
             .bind(&payload.taxonomy)
             .execute(&*pool)
             .await
-            .unwrap();
+            .unwrap(); // TODO: Handle this 
+            (StatusCode::OK, ())
     }
 
     #[openapi_path(
@@ -101,34 +102,35 @@ pub mod crud {
             ("id" = Uuid, Path, description = "Dinosaur ID")
         ),
         responses(
-            (status = 200, description = "Dinosaur deleted"),
-            (status = 404, description = "Dinosaur not found")
+            (status = StatusCode::OK, description = "Dinosaur deleted"),
+            (status = StatusCode::NOT_FOUND, description = "Dinosaur not found")
         )
     )]
     #[axum_macros::debug_handler]
-    pub async fn delete(Path(id): Path<Uuid>, State(pool): State<AppState>) {
+    pub async fn delete(Path(id): Path<Uuid>, State(pool): State<AppState>) -> impl IntoResponse {
         tracing::debug!("Request: delete dinosaur {}", id);
         sqlx::query("DELETE FROM dinosaurs WHERE id = ?")
             .bind(id)
             .execute(&*pool)
             .await
-            .unwrap();
+            .unwrap(); // TODO: Handle this
+        (StatusCode::OK, ())
     }
 
     #[openapi_path(
         get,
         path = "/dinosaurs",
         responses(
-            (status = 200, description = "Returned all found dinosaurs", body = [Dinosaur]),
+            (status = StatusCode::OK, description = "Returned all found dinosaurs", body = [Dinosaur]),
         )
     )]
-    pub async fn list(State(pool): State<AppState>) -> Json<Vec<Dinosaur>> {
+    pub async fn list(State(pool): State<AppState>) -> impl IntoResponse {
         tracing::debug!("Request: list all dinosaurs");
         let dinos = sqlx::query_as::<_, Dinosaur>("SELECT * FROM dinosaurs")
             .fetch_all(&*pool)
             .await
             .expect("Pool should be available and types are valid");
-        Json(dinos)
+        (StatusCode::OK, Json(dinos))
     }
 
 }
@@ -144,11 +146,11 @@ pub mod patch {
         ),
         request_body = UpdateSpecies,
         responses(
-            (status = 200, description = "Dinosaur species updated")
+            (status = StatusCode::OK, description = "Dinosaur species updated")
         )
     )]
     #[axum_macros::debug_handler]
-    pub async fn species(Path(id): Path<Uuid>, State(pool): State<AppState>, Json(payload): Json<UpdateSpecies>) {
+    pub async fn species(Path(id): Path<Uuid>, State(pool): State<AppState>, Json(payload): Json<UpdateSpecies>) -> impl IntoResponse {
         tracing::debug!("Request to update species of {} to {:?}", id, &payload.species);
         sqlx::query("
             UPDATE dinosaurs SET taxonomy = ? WHERE id = ?")
@@ -156,7 +158,8 @@ pub mod patch {
             .bind(id)
             .execute(&*pool)
             .await
-            .unwrap();
+            .unwrap(); // TODO: Handle this
+        (StatusCode::OK, ())
     }
 
     #[openapi_path(
@@ -167,11 +170,11 @@ pub mod patch {
         ),
         request_body = UpdateTaxonomy,
         responses(
-            (status = 200, description = "Dinosaur taxonomy updated")
+            (status = StatusCode::OK, description = "Dinosaur taxonomy updated")
         )
     )]
     #[axum_macros::debug_handler]
-    pub async fn taxonomy(Path(id): Path<Uuid>, State(pool): State<AppState>, Json(payload): Json<UpdateTaxonomy>) {
+    pub async fn taxonomy(Path(id): Path<Uuid>, State(pool): State<AppState>, Json(payload): Json<UpdateTaxonomy>) -> impl IntoResponse {
         tracing::debug!("Request to update taxonomy of {} with {:?}", id, &payload.taxonomy);
         sqlx::query("
             UPDATE dinosaurs SET taxonomy = ? WHERE id = ?")
@@ -179,6 +182,7 @@ pub mod patch {
             .bind(id)
             .execute(&*pool)
             .await
-            .unwrap();
+            .unwrap(); // TODO: Handle this
+        (StatusCode::OK, ())
     }
 }
