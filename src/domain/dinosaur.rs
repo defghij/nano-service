@@ -14,14 +14,7 @@ pub struct Dinosaur {
 }
 
 #[derive(Clone, Debug)]
-#[derive(ToSchema, Serialize, Deserialize, Type, FromRow, Encode, Decode)]
-pub struct CreateDinosaur {
-    pub species: String,
-    pub taxonomy: Taxonomy,
-}
-
-#[derive(Clone, Debug)]
-#[derive(ToSchema, Serialize, Deserialize, Type)]
+#[derive(ToSchema, Serialize, Deserialize,Type)]
 #[sqlx(type_name = "TEXT")]
 #[sqlx(rename_all="lowercase")]
 #[serde(rename_all="lowercase")]

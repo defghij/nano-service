@@ -7,35 +7,31 @@ use sqlx::{
 
 use super::DB_URL;
 
-async fn open_or_create() {
+/// Checks if a database at the specified url already exists and 
+/// if it does not then it creates a new one.
+async fn create_database() {
     if !Sqlite::database_exists(DB_URL).await.unwrap_or(false) {
-        tracing::info!("Creating database {DB_URL}");
+        tracing::debug!("Creating database: {DB_URL}");
         match Sqlite::create_database(DB_URL).await {
-            Ok(_) => tracing::info!("Create db success"),
+            Ok(_) => tracing::debug!("Create db success"),
             Err(error) => panic!("error: {}", error),
         }
     } else {
-        tracing::info!("Creating database {DB_URL}");
+        tracing::debug!("Using existing database: {DB_URL}");
     }
 }
 
+/// Connects to a local database. It will create the database 
+/// if one does not already exist.
 pub async fn connect() -> Pool<Sqlite> {
-    open_or_create().await;
+    create_database().await;
     let pool = SqlitePool::connect(DB_URL).await.expect("DB should already exist");
     tracing::info!("Connected to {}", DB_URL);
     pool
 }
 
-#[allow(unused,dead_code)]
-pub async fn insert(dino: &str, pool: &Pool<Sqlite>) {
-    let _result = sqlx::query("INSERT INTO dinosaurs (species) VALUES (?)")
-        .bind(dino)
-        .execute(pool)
-        .await
-        .expect("The dinosaurs table with species column should exist");
-    tracing::info!("Inserted entry into db");
-}
-
+/// Takes the provided pool drops the existing table, if any
+/// exists, and recreates it.
 pub async fn create_table(pool: &Pool<Sqlite>) {
     let query_result = sqlx::query("
         DROP TABLE dinosaurs;      -- Remove old one first

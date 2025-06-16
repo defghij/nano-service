@@ -1,15 +1,14 @@
-use persistence::DB_URL;
 use tracing::Level;
-use sqlx::{migrate::MigrateDatabase, sqlite::SqlitePoolOptions, Sqlite, SqlitePool};
+use sqlx::SqlitePool;
 
 use std::sync::Arc;
 
 mod domain;
 mod persistence;
+mod interface;
 mod observability;
-mod interfaces;
+mod dto;
 
-//use domain::dinosaur::Dinosaur;
 use observability::setup_tracing;
 
 type AppState = Arc<SqlitePool>;
@@ -29,11 +28,11 @@ async fn main() {
     //tracing::info!("Connected to {}", persistence::DB_URL);
     
 
-    let app = interfaces::api::app(Arc::new(pool));
+    let app = interface::routes(Arc::new(pool));
 
-    let listener = tokio::net::TcpListener::bind(interfaces::URL).await.unwrap();
-    tracing::info!("Bound lister to {}", interfaces::URL);
-    tracing::info!("View API at {}/api", interfaces::URL);
+    let listener = tokio::net::TcpListener::bind(interface::URL_BASE).await.unwrap();
+    tracing::info!("Bound lister to {}", interface::URL_BASE);
+    tracing::info!("View API at {}/{}",interface::URL_BASE, interface::OPENAPI_PATH);
 
     axum::serve(listener, app).await.unwrap();
 }
