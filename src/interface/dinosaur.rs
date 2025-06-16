@@ -53,7 +53,7 @@ pub mod crud {
             ("id" = Uuid, Path, description = "Dinosaur UUID")
         ),
         responses(
-            (status = StatusCode::OK, body = Dinosaur),
+            (status = StatusCode::OK,        body = Dinosaur),
             (status = StatusCode::NOT_FOUND, description = "Dinosaur not found")
         )
     )]

@@ -8,6 +8,7 @@ mod persistence;
 mod interface;
 mod observability;
 mod dto;
+mod tests;
 
 use observability::setup_tracing;
 
